@@ -201,19 +201,6 @@ export MMLLM_BWD_SKIP_FRAC_NET_ONLY=0.5
 export MMLLM_BWD_SKIP_FRAC_LOCAL=0.0
 export MMLLM_ABLATION_QUICK=true
 export MMLLM_PRINT_EVERY=1
-# VALIDATION opt-in (MMLLM_DISTILL_GATE=true; default off → cron unaffected):
-# enable the existing per-Local-Bank distill gate at the wake→sleep transition.
-# Signal=movement (mean|V_local| vs Gaussian-init baseline — discriminates at
-# ~70%, where ablation-on-loss is noise-floor per probe-distill-gate!).
-# WEIGHTED → soft per-layer down-weight (mean=1 normalized), not a hard drop,
-# to limit blast radius. The gate STEP defaults to MMLLM_LR_WARMUP, which
-# extend_chain.sh already sets to 70% of STEPS — fires at the right point.
-if [ "${MMLLM_DISTILL_GATE:-false}" = "true" ]; then
-  export MMLLM_DISTILL_GATE_BY_ABLATION=true
-  export MMLLM_DISTILL_GATE_SIGNAL=movement
-  export MMLLM_DISTILL_GATE_WEIGHTED=true
-  echo "▶ distill-gate ENABLED (movement signal, soft weighted) — VALIDATION run; cron default unchanged"
-fi
 # sym24 chain default: 2 rounds × 10 steps fits the ~1h CI window at the
 # 24-sym-Local pace (~154 s/step). The original chain used 5×7; sym24's
 # heavier per-step cost forces the smaller per-bird budget.
@@ -467,10 +454,13 @@ EOF
   pushed=0
   for i in 1 2 3 4; do
     echo "    [$(date -u +%H:%M:%S)] trace: push attempt $i starting"
-    PUSH_OUT=$(git push -u origin "$BR" 2>&1)
-    PUSH_RC=$?
+    # NB: capture rc inside an `if` — a bare `VAR=$(cmd)` assignment trips
+    # `set -e` the instant the substitution fails, which previously aborted
+    # the script before the rc/error were ever printed and made this retry
+    # loop dead code on failure (the git error was swallowed into PUSH_OUT).
+    if PUSH_OUT=$(git push -u origin "$BR" 2>&1); then PUSH_RC=0; else PUSH_RC=$?; fi
     echo "    [$(date -u +%H:%M:%S)] trace: push attempt $i rc=$PUSH_RC"
-    echo "$PUSH_OUT" | tail -3 | sed 's/^/    git: /'
+    echo "$PUSH_OUT" | tail -15 | sed 's/^/    git: /'
     if [ "$PUSH_RC" -eq 0 ]; then
       pushed=1
       break
@@ -482,6 +472,7 @@ EOF
     echo "    pushed r$CUR_ROUND to origin/$BR"
   else
     echo "    ERROR: failed to push r$CUR_ROUND after 4 attempts. Branch is NOT on origin." >&2
+    exit 1
   fi
 
   # Open the PR on first successful round (draft); subsequent rounds
