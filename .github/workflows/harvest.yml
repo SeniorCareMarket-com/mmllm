@@ -42,6 +42,15 @@ on:
   schedule:
     - cron: "0 * * * *"
 
+# Serialize harvests — never run two at once. A delayed cron tick overlapping
+# the prior run (or a manual dispatch racing the cron) can produce the
+# IDENTICAL harvest-<N>way-r<R> dir and then collide on the push to main
+# (non-fast-forward + an unresolvable rebase). Queue (don't cancel) so no
+# harvest tick is silently dropped.
+concurrency:
+  group: harvest-${{ github.repository }}
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
@@ -219,20 +228,26 @@ jobs:
           #       so rebase is conflict-free unless two runs happened
           #       to produce identical dir names — vanishingly rare
           #       because Nway counts differ per run.
+          pushed=0
           for i in 1 2 3 4 5; do
             if git push origin HEAD:main 2>&1 | tee /tmp/push.out | tail -3; then
               if ! grep -qE 'rejected|hung|408|disconnect|RPC failed|fast-forward' /tmp/push.out; then
-                break
+                pushed=1; break
               fi
             fi
             if grep -qE 'rejected|fast-forward|non-fast-forward' /tmp/push.out; then
               echo "▶ push attempt $i: remote moved (concurrent merge); rebasing onto origin/main…"
+              # Clear any half-finished rebase from a prior attempt before retrying.
+              git rebase --abort 2>/dev/null || true
               git pull --rebase origin main 2>&1 | tail -5 || \
                 echo "  WARN: rebase failed; continuing to retry"
             fi
             echo "▶ push attempt $i failed; retrying in $((i * 8))s…"
             sleep $((i * 8))
           done
+          # Never report success on a harvest that never reached main — that
+          # silently stalls the chain (the loop used to just exhaust + exit 0).
+          [ "$pushed" = 1 ] || { echo "ERROR: harvest push failed after 5 attempts — NOT on main." >&2; exit 1; }
 
       - name: Upload only the new harvest dir as artifact
         if: always() && steps.harvest.outputs.new_dir != ''
