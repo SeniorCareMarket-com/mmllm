@@ -93,6 +93,12 @@ jobs:
         run: |
           git config user.name  "harvest CI"
           git config user.email "harvest@github-actions.local"
+          # The harvest-dir push to main is large (~135 MB+); GitHub 500s on
+          # the chunked HTTP/2 upload (same wall train.sh hit). Buffer the
+          # whole pack into one Content-Length body + pin HTTP/1.1 so the
+          # commit+push step below lands reliably.
+          git config http.postBuffer 1073741824
+          git config http.version    HTTP/1.1
 
       - name: Free disk (drop unused pre-installed tool caches)
         # ubuntu-latest comes with ~30+ GB of pre-installed runtimes
