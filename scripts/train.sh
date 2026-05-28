@@ -68,7 +68,22 @@ if [ -n "${GITHUB_REPOSITORY:-}" ] && [ "${GITHUB_REPOSITORY}" != "johnmn3/mmllm
   if gh api -X POST "/repos/${GITHUB_REPOSITORY}/merge-upstream" -f branch=main 2>&1 | sed 's/^/    /' | head -5; then
     :
   else
-    echo "    WARN: merge-upstream failed; bird push may be large"
+    # merge-upstream fails on forks with no common ancestor with upstream
+    # (e.g. an old fork from before a history rewrite / squash, OR a fork
+    # whose main has diverged). In that case, hard-reset the fork's main
+    # to upstream's tip via the refs API (force). This is safe for the
+    # federated setup: fork main is never supposed to carry local commits
+    # (birds push to claude/train-* branches, not main), so there's
+    # nothing to lose. The fork's GITHUB_TOKEN has contents:write on its
+    # own repo, so the PATCH lands.
+    echo "    merge-upstream returned non-zero; falling back to forced refset of fork main from upstream tip"
+    UP_SHA=$(gh api /repos/johnmn3/mmllm/git/refs/heads/main --jq '.object.sha' 2>/dev/null || true)
+    if [ -n "$UP_SHA" ] && gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/git/refs/heads/main" \
+       -F sha="$UP_SHA" -F force=true 2>&1 | sed 's/^/    /' | head -3 ; then
+      echo "    fork main forced to upstream $UP_SHA"
+    else
+      echo "    WARN: fork main refset failed too; bird push may be large"
+    fi
   fi
 fi
 
