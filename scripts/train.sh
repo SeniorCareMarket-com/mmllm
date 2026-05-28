@@ -70,19 +70,37 @@ if [ -n "${GITHUB_REPOSITORY:-}" ] && [ "${GITHUB_REPOSITORY}" != "johnmn3/mmllm
   else
     # merge-upstream fails on forks with no common ancestor with upstream
     # (e.g. an old fork from before a history rewrite / squash, OR a fork
-    # whose main has diverged). In that case, hard-reset the fork's main
-    # to upstream's tip via the refs API (force). This is safe for the
-    # federated setup: fork main is never supposed to carry local commits
-    # (birds push to claude/train-* branches, not main), so there's
-    # nothing to lose. The fork's GITHUB_TOKEN has contents:write on its
-    # own repo, so the PATCH lands.
-    echo "    merge-upstream returned non-zero; falling back to forced refset of fork main from upstream tip"
+    # whose main has diverged). Try force-reset of fork main via refs API
+    # next — but the auto-issued GITHUB_TOKEN is an INTEGRATION token and
+    # cannot force-update the default branch (returns 403 even with
+    # `contents: write`). If that's blocked, fall back to a SIDECAR ref:
+    # create / update refs/heads/upstream-sync on the fork pointing to
+    # upstream's tip. receive-pack only needs SOME local ref in the post-
+    # squash lineage so it can thin-pack the bird's claude/train-* push
+    # against it — the bird's push doesn't actually need fork-main to be
+    # synced. Sidecar = non-default branch → integration token CAN
+    # create/update it with contents:write. Either path leaves the bird
+    # push thin (~250 MB) instead of full (~600+ MB → HTTP 500).
+    echo "    merge-upstream returned non-zero; trying forced refset of fork main"
     UP_SHA=$(gh api /repos/johnmn3/mmllm/git/refs/heads/main --jq '.object.sha' 2>/dev/null || true)
     if [ -n "$UP_SHA" ] && gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/git/refs/heads/main" \
        -F sha="$UP_SHA" -F force=true 2>&1 | sed 's/^/    /' | head -3 ; then
       echo "    fork main forced to upstream $UP_SHA"
+    elif [ -n "$UP_SHA" ]; then
+      echo "    main refset blocked (integration token can't force default branch);"
+      echo "    falling back to sidecar ref refs/heads/upstream-sync at $UP_SHA"
+      # Try PATCH first (ref already exists from a prior run); fall back to POST (create).
+      if gh api -X PATCH "/repos/${GITHUB_REPOSITORY}/git/refs/heads/upstream-sync" \
+         -F sha="$UP_SHA" -F force=true 2>&1 | sed 's/^/    /' | head -3 ; then
+        echo "    sidecar upstream-sync updated to $UP_SHA"
+      elif gh api -X POST "/repos/${GITHUB_REPOSITORY}/git/refs" \
+           -f ref="refs/heads/upstream-sync" -f sha="$UP_SHA" 2>&1 | sed 's/^/    /' | head -3 ; then
+        echo "    sidecar upstream-sync created at $UP_SHA"
+      else
+        echo "    WARN: sidecar fallback failed too; bird push may be large"
+      fi
     else
-      echo "    WARN: fork main refset failed too; bird push may be large"
+      echo "    WARN: could not read upstream tip SHA; bird push may be large"
     fi
   fi
 fi
