@@ -201,6 +201,19 @@ export MMLLM_BWD_SKIP_FRAC_NET_ONLY=0.5
 export MMLLM_BWD_SKIP_FRAC_LOCAL=0.0
 export MMLLM_ABLATION_QUICK=true
 export MMLLM_PRINT_EVERY=1
+# VALIDATION opt-in (MMLLM_DISTILL_GATE=true; default off → cron unaffected):
+# enable the existing per-Local-Bank distill gate at the wake→sleep transition.
+# Signal=movement (mean|V_local| vs Gaussian-init baseline — discriminates at
+# ~70%, where ablation-on-loss is noise-floor per probe-distill-gate!).
+# WEIGHTED → soft per-layer down-weight (mean=1 normalized), not a hard drop,
+# to limit blast radius. The gate STEP defaults to MMLLM_LR_WARMUP, which
+# extend_chain.sh already sets to 70% of STEPS — fires at the right point.
+if [ "${MMLLM_DISTILL_GATE:-false}" = "true" ]; then
+  export MMLLM_DISTILL_GATE_BY_ABLATION=true
+  export MMLLM_DISTILL_GATE_SIGNAL=movement
+  export MMLLM_DISTILL_GATE_WEIGHTED=true
+  echo "▶ distill-gate ENABLED (movement signal, soft weighted) — VALIDATION run; cron default unchanged"
+fi
 # sym24 chain default: 2 rounds × 10 steps fits the ~1h CI window at the
 # 24-sym-Local pace (~154 s/step). The original chain used 5×7; sym24's
 # heavier per-step cost forces the smaller per-bird budget.
