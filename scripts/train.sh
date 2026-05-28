@@ -369,7 +369,12 @@ PY
     "$ARCHIVE/round-$CUR_ROUND" "$DEST" 2>&1 | tail -2
   echo "    [$(date -u +%H:%M:%S)] trace: post-encode, cp dense.pt"
   cp "$ARCHIVE/round-$CUR_ROUND/dense.pt"            "$DEST/"
-  cp "$ARCHIVE/round-$CUR_ROUND"/opt-sparse-net.*.pt "$DEST/" 2>/dev/null || true
+  # opt-sparse-net.*.pt (Adam state, ~430 MB) is deliberately NOT published.
+  # The harvest discards it (harvest_action.sh:474 excludes opt-sparse-net.*),
+  # and the chain head never carries it forward, so pushing it was pure dead
+  # weight that bloated the bird push from the intended ~140 MB to ~573 MB —
+  # which tripped GitHub's intermittent HTTP-500 large-pack wall. Harvest pushes
+  # (which already exclude opt) land reliably at ~135 MB; mirror that here.
   for r in $(seq $((START_ROUND + 1)) "$CUR_ROUND"); do
     cp "$ARCHIVE/round-$r/log.jsonl" "$DEST/round-$r.log.jsonl" 2>/dev/null || true
   done
@@ -423,7 +428,7 @@ EOF
     git add -u "$PREV_DEST" 2>/dev/null || true
   fi
   git add "$DEST"/delta-sparse-net.*.pt "$DEST"/dense.pt \
-          "$DEST"/opt-sparse-net.*.pt "$DEST"/meta.json \
+          "$DEST"/meta.json \
           "$DEST"/round-*.log.jsonl "$DEST"/wall.tsv 2>/dev/null
 
   # Tripwire — only the worker's own dir tree may be staged.
