@@ -457,6 +457,15 @@ EOF
   git config pack.useBitmaps     false
   git config gc.auto             0
 
+  # The harvest pack is ~232 MB+ (delta-sparse V_net + dense.pt). GitHub's
+  # smart-HTTP endpoint intermittently 500s on a large CHUNKED push over
+  # HTTP/2 — "RPC failed; HTTP 500", "send-pack: unexpected disconnect",
+  # "the remote end hung up unexpectedly" — even with plenty of RAM free.
+  # Buffer the whole pack into a single Content-Length body (postBuffer >
+  # pack size, NOT chunked) and pin HTTP/1.1 to dodge HTTP/2 framing flake.
+  git config http.postBuffer     1073741824
+  git config http.version        HTTP/1.1
+
   # Push the round. Capture output AND exit code — the prior version
   # piped to `tail -1 | grep -q` which suppressed all output AND only
   # detected a narrow set of error strings, so genuine permission
