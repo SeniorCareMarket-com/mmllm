@@ -53,6 +53,25 @@ echo "▶ syncing branch state from upstream…"
 UPSTREAM=https://github.com/johnmn3/mmllm.git
 git fetch "$UPSTREAM" main --depth=1 2>&1 | tail -1
 
+# On a FORK, sync the fork's `main` from upstream server-side BEFORE the
+# bird's eventual push. Without this, the bird-branch push to the fork has
+# to include every upstream commit the fork is behind by (each hourly
+# harvest is ~135 MB of new blobs alone) — that swells the pack from the
+# bird's ~250 MB harvest to 500–700 MB and trips GitHub's intermittent
+# HTTP-500 large-pack wall. merge-upstream is a server-side fast-forward
+# (no client transfer), and the fork's GITHUB_TOKEN has contents:write
+# on its own repo, so this just works. Best-effort: on failure (perm,
+# conflict, etc.) we log and let the push proceed.
+if [ -n "${GITHUB_REPOSITORY:-}" ] && [ "${GITHUB_REPOSITORY}" != "johnmn3/mmllm" ] \
+   && command -v gh > /dev/null 2>&1; then
+  echo "▶ fork detected (${GITHUB_REPOSITORY}); fast-forwarding fork main from upstream (server-side)…"
+  if gh api -X POST "/repos/${GITHUB_REPOSITORY}/merge-upstream" -f branch=main 2>&1 | sed 's/^/    /' | head -5; then
+    :
+  else
+    echo "    WARN: merge-upstream failed; bird push may be large"
+  fi
+fi
+
 # Chain selection. MMLLM_CHAIN_PREFIX defaults to `sym24` (the current
 # production chain: symmetric Local at 24 layers). Set to `orig` (or
 # `legacy`) to target the original pre-sym24 chain (`harvest-Nway-rN`,
