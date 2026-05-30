@@ -1,0 +1,86 @@
+{
+  "spork_version": "0.9",
+  "target_round": 104,
+  "n_workers": 5,
+  "wave": "train-r104",
+  "workers": [
+    {
+      "handle": "PRTfx",
+      "branch": "origin/claude/train-sym24-e0bee1c7-PRTfx",
+      "ctrl_bpc": 3.3034
+    },
+    {
+      "handle": "LfrwO",
+      "branch": "fork-slaa-us-mmllm-claude-train-sym24-7e4f877e-LfrwO",
+      "ctrl_bpc": 3.2441
+    },
+    {
+      "handle": "OvbA1",
+      "branch": "fork-SeniorCareMarket-com-mmllm-claude-train-sym24-c70e1c5e-OvbA1",
+      "ctrl_bpc": 3.1746
+    },
+    {
+      "handle": "LG5EX",
+      "branch": "fork-joly-os-mmllm-claude-train-sym24-892fd239-LG5EX",
+      "ctrl_bpc": 3.2532
+    },
+    {
+      "handle": "v8tQk",
+      "branch": "fork-davidwuchn-mmllm-claude-train-sym24-f6d7d89d-v8tQk",
+      "ctrl_bpc": 3.244
+    }
+  ],
+  "worker_ctrl_bpc_mean": 3.2439,
+  "worker_ctrl_bpc_best": 3.1746,
+  "previous_harvest": {
+    "round": 102,
+    "dir": "workers/dispatcher/harvest-4way-r102_sym24",
+    "mean": 3.2496,
+    "best": 3.1874
+  },
+  "direct_contributions": [
+    {
+      "bird_id": "e0bee1c760394975",
+      "handle": "PRTfx",
+      "branch": "origin/claude/train-sym24-e0bee1c7-PRTfx",
+      "n_steps": 20,
+      "ctrl_bpc": 3.3034
+    },
+    {
+      "bird_id": "7e4f877e70e14391",
+      "handle": "LfrwO",
+      "branch": "fork-slaa-us-mmllm-claude-train-sym24-7e4f877e-LfrwO",
+      "n_steps": 20,
+      "ctrl_bpc": 3.2441
+    },
+    {
+      "bird_id": "c70e1c5e12954e47",
+      "handle": "OvbA1",
+      "branch": "fork-SeniorCareMarket-com-mmllm-claude-train-sym24-c70e1c5e-OvbA1",
+      "n_steps": 20,
+      "ctrl_bpc": 3.1746
+    },
+    {
+      "bird_id": "892fd23992f14445",
+      "handle": "LG5EX",
+      "branch": "fork-joly-os-mmllm-claude-train-sym24-892fd239-LG5EX",
+      "n_steps": 20,
+      "ctrl_bpc": 3.2532
+    },
+    {
+      "bird_id": "f6d7d89d65444e5b",
+      "handle": "v8tQk",
+      "branch": "fork-davidwuchn-mmllm-claude-train-sym24-f6d7d89d-v8tQk",
+      "n_steps": 20,
+      "ctrl_bpc": 3.244
+    }
+  ],
+  "ancestor_harvests": [
+    "workers/dispatcher/harvest-4way-r102_sym24"
+  ],
+  "cumulative_total_steps": 240,
+  "cumulative_unique_birds": 12,
+  "harvested_at": "2026-05-30T19:41:36Z",
+  "harvester": "scripts/harvest_action.sh (GH Action)",
+  "note": "Lean harvest \u2014 sparse deltas + averaged dense only, no opt-state."
+}
