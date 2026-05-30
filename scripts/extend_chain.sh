@@ -43,9 +43,9 @@ echo "════════════════════════�
 # │  Net > Local. Net is the DURABLE long-term memory.       │
 # │  Anything that shrinks Net below 1 GB is a regression.   │
 # └──────────────────────────────────────────────────────────┘
-export MMLLM_DEVICE=cpu
-export MMLLM_BANK_ON_GPU=false
-export MMLLM_NET_BANK_ON_GPU=false
+: ${MMLLM_DEVICE:=cpu} ; export MMLLM_DEVICE              # honor a pre-set device (e.g. mps)
+: ${MMLLM_BANK_ON_GPU:=false} ; export MMLLM_BANK_ON_GPU  # on GPU, set true to keep bank V
+: ${MMLLM_NET_BANK_ON_GPU:=false} ; export MMLLM_NET_BANK_ON_GPU  # on-device (avoid CPU↔GPU hop)
 # Knobs below are wave defaults but can be overridden by passing the env
 # var BEFORE invoking this script. Birds with constrained RAM (15-16 GB
 # containers) typically lower MMLLM_BATCH and SUB_TOP_K to fit; see
@@ -120,9 +120,20 @@ export MMLLM_NET_BANK_ON_GPU=false
 : ${MMLLM_DISTILL_COEF:=0.5}     ; export MMLLM_DISTILL_COEF
 : ${MMLLM_DISTILL_COEF_END:=5.0} ; export MMLLM_DISTILL_COEF_END
 : ${MMLLM_DISTILL_TARGET:=residual}      ; export MMLLM_DISTILL_TARGET
-: ${MMLLM_DISTILL_DIRECTION_ONLY:=true}  ; export MMLLM_DISTILL_DIRECTION_ONLY
-: ${MMLLM_DISTILL_MAGNITUDE_COEF:=1.0}   ; export MMLLM_DISTILL_MAGNITUDE_COEF
-: ${MMLLM_DISTILL_MAGNITUDE_COEF_END:=1.0}; export MMLLM_DISTILL_MAGNITUDE_COEF_END
+# Distill loss FORM: full magnitude-aware MSE (round-9's proven-consolidating
+# form). The broken form was direction-only + magnitude_coef=1.0, which zeroes
+# the direction term (the docstring itself notes it "broke the consolidation
+# transfer") — a key reason birds stopped consolidating.
+#
+# FORCED (=, not :=) on the prod cron path so a stray runner/Actions env var
+# cannot silently flip the chain back to the broken magnitude-only form and
+# de-consolidate every fork. DIRECTION_ONLY is the decisive knob: when false,
+# the distill is plain MSE(net, target) and MAGNITUDE_COEF is ignored entirely
+# (attention_kernel._compute_block_distill_inline / collect-distill-loss).
+# Experiment scripts set these directly and don't route through extend_chain.
+export MMLLM_DISTILL_DIRECTION_ONLY=false
+export MMLLM_DISTILL_MAGNITUDE_COEF=0.0
+export MMLLM_DISTILL_MAGNITUDE_COEF_END=0.0
 : ${MMLLM_DISTILL_MAGNITUDE_CLAMP:=10.0} ; export MMLLM_DISTILL_MAGNITUDE_CLAMP
 : ${MMLLM_LR_BANK_MULT:=3.0}     ; export MMLLM_LR_BANK_MULT
 : ${MMLLM_LR_BANK_MULT_END:=0.001}; export MMLLM_LR_BANK_MULT_END
@@ -157,7 +168,7 @@ export MMLLM_NET_BANK_ON_GPU=false
 # train.yml `lr` workflow_dispatch input.
 : ${MMLLM_LR:=3e-2}              ; export MMLLM_LR
 : ${MMLLM_LR_MIN:=3e-2}          ; export MMLLM_LR_MIN
-export MMLLM_LR_WARMUP=$((STEPS * 70 / 100))
+: ${MMLLM_LR_WARMUP:=$((STEPS * 70 / 100))} ; export MMLLM_LR_WARMUP
 : ${MMLLM_REPLAY_EVERY:=10}      ; export MMLLM_REPLAY_EVERY
 : ${MMLLM_REPLAY_BUFFER_SIZE:=256}; export MMLLM_REPLAY_BUFFER_SIZE
 : ${MMLLM_REPLAY_THRESHOLD:=0.5} ; export MMLLM_REPLAY_THRESHOLD
@@ -291,7 +302,7 @@ PY
   echo "  → training $STEPS steps (LR=$MMLLM_LR, LR_NET_MULT_END=$MMLLM_LR_NET_MULT_END, mag_coef=$MMLLM_DISTILL_MAGNITUDE_COEF)…"
   local TRAIN_LOG="$ARCHIVE_ROOT/round-${round_num}.train.log"
   mmllm train-fim-mini "$FIM_BASE" "$BANK_BASE" \
-        $((STEPS + 1)) $((STEPS + 1)) $((STEPS + 10)) > "$TRAIN_LOG" 2>&1 || true
+        $((STEPS + 1)) "${MMLLM_EVAL_EVERY:-$((STEPS + 1))}" $((STEPS + 10)) > "$TRAIN_LOG" 2>&1 || true
 
   local elapsed=$(($(date +%s) - t0))
 
