@@ -1,0 +1,22 @@
+{
+  "spork_version": "0.9",
+  "handle": "F1k7r",
+  "bird_id": "cd1e6fba28ff44a2",
+  "wave": "train-r78",
+  "extended_from": "workers/dispatcher/harvest-1way-r76_sym24/round-76 (sparse-delta vs workers/dispatcher/harvest-0way-r0_sym24/round-0)",
+  "extended_from_harvest": "workers/dispatcher/harvest-1way-r76_sym24",
+  "chain_prefix": "sym24",
+  "start_round": 76,
+  "end_round": 78,
+  "round_length_steps": 10,
+  "n_rounds_trained": 2,
+  "n_rounds_target": 2,
+  "n_total_steps": 20,
+  "final_ctrl_bpc": "3.3970",
+  "corpus": "clojure-general",
+  "MMLLM_BWD_SKIP_FRAC_NET_ONLY": "0.5",
+  "MMLLM_BWD_SKIP_FRAC_LOCAL": "0.0",
+  "MMLLM_ABLATION_QUICK": "true",
+  "branch_base": "main",
+  "git_sha": "dc7f3599bffc35407cb2e67ff90101900c8162e3"
+}
