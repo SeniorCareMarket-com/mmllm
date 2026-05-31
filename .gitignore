@@ -1,0 +1,49 @@
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+dist/
+build/
+.basilisp_cache/
+.DS_Store
+
+# editor / tooling caches
+.clj-kondo/.cache/
+.lsp/
+.portal/
+
+# accidental relative-path mmap artifacts (from a smoke run that resolved
+# bank-path="" to "" prefixes in cwd). Real banks live under /data on Modal.
+/.[0-9].bin
+/-net.[0-9].bin
+
+# opt-sparse-net.pt at design-sized V_net is ~230 MB (over GitHub's 100 MB
+# per-file limit). Workers keep it locally for resume across rounds within
+# a wave; published starting state is V_net + dense only. extend_chain.sh
+# initializes an empty one on missing-resume.
+workers/**/opt-sparse-net.pt
+
+# Chain-head big binaries live as GitHub Release assets, NOT in git history
+# (committing ~135 MB/round ballooned main to tens of GB). Only manifest.json
+# is committed per harvest dir; scripts/chain_assets.py fetches these on demand.
+# Scoped to dispatcher harvest dirs so bird dirs (workers/<HANDLE>/...) are
+# unaffected — bird branches still carry their own deltas (they're pruned).
+workers/dispatcher/harvest-*/round-*/delta-sparse-net.*.pt
+workers/dispatcher/harvest-*/round-*/V_net.*.bin
+workers/dispatcher/harvest-*/round-*/dense.pt
+workers/dispatcher/harvest-*/round-*/opt-sparse-net.*.pt
+
+# Static assets also live as GitHub Release tarballs (NOT in git — they made the
+# tree 5.2 GB → fat shallow-clone push packs → HTTP-500s). scripts/
+# fetch_static_assets.sh downloads + extracts these on demand into the dirs
+# below; never re-commit them. Training corpora:
+workers/dispatcher/corpora/**/*.bin
+workers/dispatcher/corpora/**/*.part-*
+# Dependency wheels (torch chunked as .part-NN inside the tarball):
+workers/dispatcher/deps/wheels/*.whl
+workers/dispatcher/deps/wheels/*.part-*
+# round-6 warm-start baseline (read by the local experiment scripts):
+core/round-6/**/*.bin
+core/round-6/**/*.pt
+# fetch_static_assets extraction markers:
+.asset-*.ok
