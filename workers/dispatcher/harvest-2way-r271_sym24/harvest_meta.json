@@ -1,0 +1,16 @@
+{
+  "spork_version": "0.9",
+  "target_round": 271,
+  "n_workers": 2,
+  "wave": "local-fedavg-r271",
+  "merge": true,
+  "previous_harvest": {
+    "round": 266
+  },
+  "worker_ctrl_bpc_mean": 2.7921,
+  "worker_ctrl_bpc_best": 2.79,
+  "worker_delta_net_mean": -0.0118,
+  "worker_moved_pct_mean": 12.041,
+  "harvested_at": "2026-06-03T18:06:27Z",
+  "harvester": "wave_driver2.sh (local par FedAvg, push combined only)"
+}
