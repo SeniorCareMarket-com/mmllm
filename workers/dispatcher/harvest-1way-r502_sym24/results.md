@@ -1,38 +1,38 @@
-# harvest-1way-r437 — sparse-delta merge of 1 birds
+# harvest-1way-r502 — sparse-delta merge of 1 birds
 
 ## Worker endpoints
 
-| handle | branch | R437 ctrl_bpc |
+| handle | branch | R502 ctrl_bpc |
 |--------|--------|--------------:|
-| SKYyv | fork-SeniorCareMarket-com-mmllm-claude-train-sym24-96dfa4cb-SKYyv | 2.2209 |
-| **mean** | | **2.2209** |
-| **best** | | **2.2209** |
+| ZuQMS | fork-slaa-us-mmllm-claude-train-sym24-b4bbcd49-ZuQMS | 2.6507 |
+| **mean** | | **2.6507** |
+| **best** | | **2.6507** |
 
-## Chain progression R140 → R437
+## Chain progression R140 → R502
 
 Previous harvest: `workers/dispatcher/harvest-2way-merge-r140_sym24`
 
 | metric         | prior          | this           | Δ        |
 |----------------|---------------:|---------------:|---------:|
-| ctrl_bpc mean  | 2.0510         | 2.2209         | +0.1699 |
-| ctrl_bpc best  | 1.8188         | 2.2209         | +0.4021 |
+| ctrl_bpc mean  | 2.0510         | 2.6507         | +0.5997 |
+| ctrl_bpc best  | 1.8188         | 2.6507         | +0.8319 |
 
-## Per-round trajectory (best bird: SKYyv)
+## Per-round trajectory (best bird: ZuQMS)
 
 | round | wall_s | ctrl_bpc | Δ_net   |
 |-------|-------:|---------:|--------:|
-| 437 | 5378 | 2.2209 | +0.0156 |
+| 502 | 4134 | 2.6507 | +0.0156 |
 
 ## Cumulative training contribution
 
 - This harvest: **50 steps** from 1 bird(s)
 - Across full ancestry (deduped by bird_id): **50 steps** from 1 unique bird(s)
 - Ancestor harvest(s):
-  - `workers/dispatcher/harvest-2way-r436_sym24`
+  - `workers/dispatcher/harvest-2way-r501_sym24`
 
 ## Output
 
-`workers/dispatcher/harvest-1way-r437_sym24/round-437/`:
+`workers/dispatcher/harvest-1way-r502_sym24/round-502/`:
 - `delta-sparse-net.{0..31}.pt` (row-aware FedAvg merge of 1 workers)
 - `dense.pt` (averaged across 1 birds)
 - Reference for delta encoding: `workers/dispatcher/harvest-0way-r0_sym24/round-0`
