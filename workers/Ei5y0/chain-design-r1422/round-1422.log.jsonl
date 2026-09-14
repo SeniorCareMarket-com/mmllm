@@ -1,0 +1,8 @@
+{"event":"manifest","ts":"2026-09-14T18:27:42Z","git_sha":"14685db74bdb6c8a87082e1f16828b58304c9340","total_steps":81}
+{"event":"config","ts":"2026-09-14T18:27:42Z","recipe":{"MMLLM_REWARM_NETBANK_KEYS":"false","MMLLM_K_ALIGN_COEF":"0","MMLLM_SKIP_NETBANK_WARMSTART":"true","MMLLM_STEPS_PER_ROUND":"","MMLLM_N_ROUNDS":"","MMLLM_LR":"3e-3","MMLLM_LR_NET_MULT_END":"5.0","MMLLM_DISTILL_COEF_END":"5.0","MMLLM_DISTILL_MAGNITUDE_COEF":"0.0","MMLLM_NETBANK_ENABLED":"true"}}
+{"step":81,"event":"eval","loss":2.2916,"val_bpc":3.5820,"val_ppl":11.9752,"wall_s":3636.8}
+{"step":81,"event":"final","val_bpc":3.5820,"val_ppl":11.9752,"wall_s":3646.7}
+{"step":81,"event":"bank_saved","bank_path":"/tmp/mmllm-cpu/fim-bank-chain-stack","wall_s":3646.7}
+{"step":81,"event":"ablation","control_bpc":3.5820,"ablated_local_bpc":null,"delta_local":0.0000,"ablated_net_bpc":3.7728,"delta_net":0.1908,"ablated_both_bpc":3.7728,"delta_both":0.1908,"wall_s":3670.5}
+{"event":"training_energy","backend":"wall","wall_s":3670.7,"kwh":0.066277,"gco2eq":36.204,"n_tokens":1310720,"j_per_tok":0.182035,"tok_per_s":357.07,"peak_w":65.0,"peak_vram_gb":0.000,"total_vram_gb":0.000,"vram_idle_kwh_estimate":0.000000,"pue":1.150,"grid_g_per_kwh":475.0}
+{"event": "v_net_displacement", "round": 1422, "n_layers": 32, "moved_pct_mean": 0.007354090965493974, "moved_pct_min": 0.0008404776656779732, "moved_pct_max": 0.021955461686668884, "cos_mean": 0.9999560980623896, "cos_min": 0.999759063087533}
